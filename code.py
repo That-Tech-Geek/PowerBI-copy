@@ -1,9 +1,10 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import pandasql as psql
 
 # Title of the app
-st.title("Power BI-like Data Visualization Tool")
+st.title("Power BI-like Data Visualization Tool with SQL Capabilities")
 
 # Upload CSV file
 uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
@@ -17,6 +18,19 @@ if uploaded_file is not None:
     st.subheader("Raw Data")
     st.write(df)
 
+    # SQL Query Input
+    st.subheader("Run SQL Query")
+    query = st.text_area("Write your SQL query here and make sure the table is called 'df'", 
+                         "SELECT * FROM df LIMIT 10")
+    
+    # Run the query and display the results
+    if st.button("Run Query"):
+        try:
+            query_result = psql.sqldf(query, locals())
+            st.write(query_result)
+        except Exception as e:
+            st.error(f"Error: {e}")
+    
     # Select columns to visualize
     st.subheader("Select Columns for Visualization")
     x_axis = st.selectbox("Choose X-axis", df.columns)
@@ -62,4 +76,4 @@ else:
 # Sidebar - About
 st.sidebar.header("About")
 st.sidebar.info("This is a simple Streamlit application that mimics some of the basic functionalities of Power BI. "
-                "You can upload your data, select columns to visualize, and generate different types of charts.")
+                "You can upload your data, run SQL queries, select columns to visualize, and generate different types of charts.")
