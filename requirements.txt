@@ -6,3 +6,5 @@ os
 subprocess
 sys
 transformers
+spacy
+sqlalchemy
