@@ -11,7 +11,7 @@
 ## Installation
 
 ### Requirements
-
+- Code Interpreter Program (VSCode, etc.)
 - Python 3.8 or later
 - Streamlit
 - Pandas
