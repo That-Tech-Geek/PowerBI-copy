@@ -20,8 +20,7 @@ if uploaded_file is not None:
 
     # SQL Query Input
     st.subheader("Run SQL Query")
-    query = st.text_area("Write your SQL query here and make sure the table is called 'df'", 
-                         "SELECT * FROM df LIMIT 10")
+    query = st.text_area("Write your SQL query here and make sure the table is called 'df'")
     
     # Run the query and display the results
     if st.button("Run Query"):
@@ -75,5 +74,6 @@ else:
 
 # Sidebar - About
 st.sidebar.header("About")
-st.sidebar.info("This is a simple Streamlit application that mimics some of the basic functionalities of Power BI. "
+st.sidebar.write("This is a simple Streamlit application that mimics some of the basic functionalities of Power BI. "
                 "You can upload your data, run SQL queries, select columns to visualize, and generate different types of charts.")
+st.sidebar.info("This project does not intend to infringe legal rights of any of the products it may mimic. It is built for education and research perusal, and is free to be used by all who are reading this.")
