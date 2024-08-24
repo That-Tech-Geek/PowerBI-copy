@@ -1,79 +1,66 @@
-import streamlit as st
+# Install and setup environment
+import os
+os.system('pip install pandas sqlalchemy spacy matplotlib plotly')
+os.system('python -m spacy download en_core_web_sm')
+
+# Full code implementation
+import spacy
 import pandas as pd
+from sqlalchemy import create_engine
 import plotly.express as px
-import pandasql as psql
 
-# Title of the app
-st.title("Power BI-like Data Visualization Tool with SQL Capabilities")
+# Load the NLP model
+nlp = spacy.load("en_core_web_sm")
 
-# Upload CSV file
-uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
+# Function to parse English query
+def parse_query(query):
+    doc = nlp(query)
+    columns, conditions = [], []
+    for token in doc:
+        if token.dep_ == "nsubj":
+            columns.append(token.text)
+        if token.dep_ == "prep" and token.head.text.lower() == "where":
+            conditions.append(token.text)
+    return columns, conditions
 
-# If a file is uploaded
-if uploaded_file is not None:
-    # Read the data into a DataFrame
-    df = pd.read_csv(uploaded_file)
+# Function to generate SQL query from parsed data
+def generate_sql(table_name, columns, conditions):
+    columns_str = ", ".join(columns) if columns else "*"
+    conditions_str = " AND ".join(conditions) if conditions else "1=1"
+    sql_query = f"SELECT {columns_str} FROM {table_name} WHERE {conditions_str};"
+    return sql_query
 
-    # Show the raw data
-    st.subheader("Raw Data")
-    st.write(df)
+# Function to execute SQL query and retrieve data
+def execute_sql(sql_query, connection_string):
+    engine = create_engine(connection_string)
+    df = pd.read_sql(sql_query, engine)
+    return df
 
-    # SQL Query Input
-    st.subheader("Run SQL Query")
-    query = st.text_area("Write your SQL query here and make sure the table is called 'df'")
-    
-    # Run the query and display the results
-    if st.button("Run Query"):
-        try:
-            query_result = psql.sqldf(query, locals())
-            st.write(query_result)
-        except Exception as e:
-            st.error(f"Error: {e}")
-    
-    # Select columns to visualize
-    st.subheader("Select Columns for Visualization")
-    x_axis = st.selectbox("Choose X-axis", df.columns)
-    y_axis = st.selectbox("Choose Y-axis", df.columns)
-    
-    # Chart type selection
-    st.subheader("Select Chart Type")
-    chart_type = st.selectbox(
-        "Choose a chart type",
-        ["Line", "Bar", "Scatter", "Area", "Histogram", "Pie"]
-    )
-    
-    # Generate chart based on user selection
-    if chart_type == "Line":
-        fig = px.line(df, x=x_axis, y=y_axis)
-    elif chart_type == "Bar":
-        fig = px.bar(df, x=x_axis, y=y_axis)
-    elif chart_type == "Scatter":
-        fig = px.scatter(df, x=x_axis, y=y_axis)
-    elif chart_type == "Area":
-        fig = px.area(df, x=x_axis, y=y_axis)
-    elif chart_type == "Histogram":
-        fig = px.histogram(df, x=x_axis)
-    elif chart_type == "Pie":
-        fig = px.pie(df, names=x_axis, values=y_axis)
-    
-    # Display the chart
-    st.subheader("Generated Chart")
-    st.plotly_chart(fig)
+# Function to visualize the retrieved data
+def visualize_data(df):
+    fig = px.line(df, x=df.columns[0], y=df.columns[1:])
+    fig.show()
 
-    # Download button for filtered data
-    st.subheader("Download Filtered Data")
-    filtered_data = df[[x_axis, y_axis]]
-    st.download_button(
-        label="Download CSV",
-        data=filtered_data.to_csv(index=False),
-        file_name="filtered_data.csv",
-        mime="text/csv"
-    )
-else:
-    st.write("Please upload a CSV file to get started.")
+# Main function integrating all components with user input
+def main():
+    # Get user inputs
+    table_name = input("Enter the table name: ")
+    connection_string = input("Enter the database connection string (e.g., sqlite:///your_database.db): ")
+    query = input("Enter your query (e.g., 'Show me sales where region is West'): ")
 
-# Sidebar - About
-st.sidebar.header("About")
-st.sidebar.write("This is a simple Streamlit application that mimics some of the basic functionalities of Power BI. "
-                "You can upload your data, run SQL queries, select columns to visualize, and generate different types of charts.")
-st.sidebar.info("This project does not intend to infringe legal rights of any of the products it may mimic. It is built for education and research perusal, and is free to be used by all who are reading this.")
+    # Parse the query
+    columns, conditions = parse_query(query)
+
+    # Generate SQL query
+    sql_query = generate_sql(table_name, columns, conditions)
+    print(f"Generated SQL: {sql_query}")
+
+    # Execute SQL and retrieve data
+    df = execute_sql(sql_query, connection_string)
+    print(df)
+
+    # Visualize the data
+    visualize_data(df)
+
+if __name__ == "__main__":
+    main()
